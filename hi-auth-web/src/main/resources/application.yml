@@ -17,7 +17,7 @@ spring.redis:
     host: @hiauth.redis.host@
     port: @hiauth.redis.port@
     database: @hiauth.redis.database@
-    password:
+    password: @hiauth.redis.password@
 
 spring.session.store-type: none
 spring.devtools.restart.enabled: true

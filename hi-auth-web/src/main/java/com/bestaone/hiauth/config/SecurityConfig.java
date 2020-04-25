@@ -15,11 +15,20 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+
+/**
+ * Security 配置类 说明登录方式、登录页面、哪个url需要认证、注入登录失败/成功过滤器
+ */
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+
+    /**
+     * 重写PasswordEncoder 接口中的方法，实例化加密策略
+     * @return 返回 BCrypt 加密策略
+     */
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
@@ -45,6 +54,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         auth.userDetailsService(simpleUserDetailsService());
     }
 
+
+    /**
+     * 认证管理
+     *
+     * @return 认证管理对象
+     * @throws Exception 认证异常信息
+     */
     @Override
     @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {
@@ -53,7 +69,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-
+        //在UsernamePasswordAuthenticationFilter 过滤器前 加一个过滤器 来搞验证码
+      //  http.addFilterBefore(validateCodeFilter, UsernamePasswordAuthenticationFilter.class)
         http.userDetailsService(userDetailsService());
         http.csrf().disable();
 
@@ -62,20 +79,32 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         //开启验证码功能
         http.apply(validateCodeSecurityConfig());
 
-        http.formLogin()
-                .loginPage("/signin").loginProcessingUrl("/signin/form/account").defaultSuccessUrl("/index").and()
-                //.successHandler(new MyAuthenticationSuccessHandler())//.defaultSuccessUrl("/index")
-                .logout().logoutUrl("/signout").logoutSuccessUrl("/signin").and()
-            .authorizeRequests()
-                .antMatchers("/signin","/signin/form/tel","/code/image","/code/mobile","/static/**").permitAll()
-                //这个地址由ApiAuthFilter过滤，不需要登录拦截
-                .antMatchers("/api/**").permitAll()
-                //这个地址由AuthorizationServer使用，不需要登录拦截
-                .antMatchers("/oauth/**").permitAll()
-                //这个地址开放地址
-                .antMatchers("/public/**").permitAll()
-                .antMatchers("/user/**").hasAnyRole("USER","ADMIN")
-            .anyRequest().authenticated();//其他任意请求需要登录
+        http.formLogin()//表单登录 方式
+                .loginPage("/signin")
+                .loginProcessingUrl("/signin/form/account") //登录需要经过的url请求
+                .defaultSuccessUrl("/index").and()
+                 //.successHandler(new MyAuthenticationSuccessHandler())//.defaultSuccessUrl("/index")
+                .logout().logoutUrl("/signout")
+                .logoutSuccessUrl("/signin").and()
+                .authorizeRequests() //请求授权
+                .antMatchers("/signin","/signin/form/tel","/code/image","/code/mobile","/static/**").permitAll() //不需要权限认证的url
+                 //这个地址由ApiAuthFilter过滤，不需要登录拦截
+                .antMatchers("/api/**")
+                .permitAll()
+                 //这个地址由AuthorizationServer使用，不需要登录拦截
+                .antMatchers("/oauth/**")
+                .permitAll()
+                 //这个地址开放地址
+                .antMatchers("/public/**")
+                .permitAll()
+                .antMatchers("/user/**")
+                .hasAnyRole("USER","ADMIN")
+                .anyRequest()//其他任意请求需要登录(任何请求)
+                .authenticated();//需要身份认证
+               // .and().csrf().disable()//关闭跨站请求防护
+               // .logout() //默认注销地址：/logout
+               // .logoutSuccessUrl("/authentication/require");//注销之后 跳转的页面
+
 
     }
 

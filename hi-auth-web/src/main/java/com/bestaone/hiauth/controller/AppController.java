@@ -28,6 +28,10 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+
+/**
+ * app管理 api接口
+ */
 @RestController
 @RequestMapping("/api/app")
 public class AppController implements AppApi {
